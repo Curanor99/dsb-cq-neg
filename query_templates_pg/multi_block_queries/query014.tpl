@@ -1,3 +1,4 @@
+```sql
 --
 -- Legal Notice
 --
@@ -32,135 +33,257 @@
 --
 -- Contributors:
 --
- define YEAR= random(1998, 2000, uniform);
- define DAY = random(1,28,uniform);
- define CATEGORY = sulist(dist(categories,1,1), 3);
- define MANAGER=range(random(1, 100,uniform), 10);
- define WHOLESALE_COST = range(random (0, 100, uniform), 20);
 
- define _LIMIT=100;
+DEFINE YEAR = RANDOM(1998, 2000, UNIFORM);
+DEFINE DAY = RANDOM(1, 28, UNIFORM);
+DEFINE CATEGORY = SULIST(DIST(categories, 1, 1), 3);
+DEFINE MANAGER = RANGE(RANDOM(1, 100, UNIFORM), 10);
+DEFINE WHOLESALE_COST = RANGE(RANDOM(0, 100, UNIFORM), 20);
 
- with  cross_items as
- (select i_item_sk ss_item_sk
- from item,
- (select iss.i_brand_id brand_id
-     ,iss.i_class_id class_id
-     ,iss.i_category_id category_id
- from store_sales
-     ,item iss
-     ,date_dim d1
- where ss_item_sk = iss.i_item_sk
-   and ss_sold_date_sk = d1.d_date_sk
-   and d1.d_year between [YEAR] AND [YEAR] + 2
-   and i_category IN ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
-   and i_manager_id BETWEEN [MANAGER.begin] and [MANAGER.end]
-   and ss_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-intersect
- select ics.i_brand_id
-     ,ics.i_class_id
-     ,ics.i_category_id
- from catalog_sales
-     ,item ics
-     ,date_dim d2
- where cs_item_sk = ics.i_item_sk
-   and cs_sold_date_sk = d2.d_date_sk
-   and d2.d_year between [YEAR] AND [YEAR] + 2
-   and i_category IN ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
-   and i_manager_id BETWEEN [MANAGER.begin] and [MANAGER.end]
-   and cs_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-intersect
- select iws.i_brand_id
-     ,iws.i_class_id
-     ,iws.i_category_id
- from web_sales
-     ,item iws
-     ,date_dim d3
- where ws_item_sk = iws.i_item_sk
-   and ws_sold_date_sk = d3.d_date_sk
-   and ws_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-   and d3.d_year between [YEAR] AND [YEAR] + 2) x
- where i_brand_id = brand_id
-      and i_class_id = class_id
-      and i_category_id = category_id
-      and i_category IN ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
-      and i_manager_id BETWEEN [MANAGER.begin] and [MANAGER.end]
+DEFINE _LIMIT = 100;
+
+WITH cross_items AS (
+    SELECT
+        i_item_sk AS ss_item_sk
+    FROM
+        item,
+        (
+            SELECT
+                iss.i_brand_id AS brand_id,
+                iss.i_class_id AS class_id,
+                iss.i_category_id AS category_id
+            FROM
+                store_sales,
+                item iss,
+                date_dim d1
+            WHERE
+                ss_item_sk = iss.i_item_sk
+                AND ss_sold_date_sk = d1.d_date_sk
+                AND d1.d_year BETWEEN [YEAR] AND [YEAR] + 2
+                AND i_category IN (
+                    '[CATEGORY.1]',
+                    '[CATEGORY.2]',
+                    '[CATEGORY.3]'
+                )
+                AND i_manager_id BETWEEN [MANAGER.begin] AND [MANAGER.end]
+                AND ss_wholesale_cost BETWEEN
+                    [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+
+            INTERSECT
+
+            SELECT
+                ics.i_brand_id,
+                ics.i_class_id,
+                ics.i_category_id
+            FROM
+                catalog_sales,
+                item ics,
+                date_dim d2
+            WHERE
+                cs_item_sk = ics.i_item_sk
+                AND cs_sold_date_sk = d2.d_date_sk
+                AND d2.d_year BETWEEN [YEAR] AND [YEAR] + 2
+                AND i_category IN (
+                    '[CATEGORY.1]',
+                    '[CATEGORY.2]',
+                    '[CATEGORY.3]'
+                )
+                AND i_manager_id BETWEEN [MANAGER.begin] AND [MANAGER.end]
+                AND cs_wholesale_cost BETWEEN
+                    [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+
+            INTERSECT
+
+            SELECT
+                iws.i_brand_id,
+                iws.i_class_id,
+                iws.i_category_id
+            FROM
+                web_sales,
+                item iws,
+                date_dim d3
+            WHERE
+                ws_item_sk = iws.i_item_sk
+                AND ws_sold_date_sk = d3.d_date_sk
+                AND ws_wholesale_cost BETWEEN
+                    [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+                AND d3.d_year BETWEEN [YEAR] AND [YEAR] + 2
+        ) x
+    WHERE
+        i_brand_id = brand_id
+        AND i_class_id = class_id
+        AND i_category_id = category_id
+        AND i_category IN (
+            '[CATEGORY.1]',
+            '[CATEGORY.2]',
+            '[CATEGORY.3]'
+        )
+        AND i_manager_id BETWEEN [MANAGER.begin] AND [MANAGER.end]
 ),
- avg_sales as
-(select avg(quantity*list_price) average_sales
-  from (select ss_quantity quantity
-             ,ss_list_price list_price
-       from store_sales
-           ,date_dim
-       where ss_sold_date_sk = d_date_sk
-         and d_year between [YEAR] and [YEAR] + 2
-         and ss_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-       union all
-       select cs_quantity quantity
-             ,cs_list_price list_price
-       from catalog_sales
-           ,date_dim
-       where cs_sold_date_sk = d_date_sk
-         and d_year between [YEAR] and [YEAR] + 2
-         and cs_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-       union all
-       select ws_quantity quantity
-             ,ws_list_price list_price
-       from web_sales
-           ,date_dim
-       where ws_sold_date_sk = d_date_sk
-        and ws_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-         and d_year between [YEAR] and [YEAR] + 2) x)
- [_LIMITA] select [_LIMITB] this_year.channel ty_channel
-                           ,this_year.i_brand_id ty_brand
-                           ,this_year.i_class_id ty_class
-                           ,this_year.i_category_id ty_category
-                           ,this_year.sales ty_sales
-                           ,this_year.number_sales ty_number_sales
-                           ,last_year.channel ly_channel
-                           ,last_year.i_brand_id ly_brand
-                           ,last_year.i_class_id ly_class
-                           ,last_year.i_category_id ly_category
-                           ,last_year.sales ly_sales
-                           ,last_year.number_sales ly_number_sales
- from
- (select 'store' channel, i_brand_id,i_class_id,i_category_id
-        ,sum(ss_quantity*ss_list_price) sales, count(*) number_sales
- from store_sales
-     ,item
-     ,date_dim
- where ss_item_sk in (select ss_item_sk from cross_items)
-   and ss_item_sk = i_item_sk
-   and ss_sold_date_sk = d_date_sk
-   and d_week_seq = (select d_week_seq
-                     from date_dim
-                     where d_year = [YEAR] + 1
-                       and d_moy = 12
-                       and d_dom = [DAY])
-   and i_category IN ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
-   and i_manager_id BETWEEN [MANAGER.begin] and [MANAGER.end]
-   and ss_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
- group by i_brand_id,i_class_id,i_category_id
- having sum(ss_quantity*ss_list_price) > (select average_sales from avg_sales)) this_year,
- (select 'store' channel, i_brand_id,i_class_id
-        ,i_category_id, sum(ss_quantity*ss_list_price) sales, count(*) number_sales
- from store_sales
-     ,item
-     ,date_dim
- where ss_item_sk in (select ss_item_sk from cross_items)
-   and ss_item_sk = i_item_sk
-   and ss_sold_date_sk = d_date_sk
-   and d_week_seq = (select d_week_seq
-                     from date_dim
-                     where d_year = [YEAR]
-                       and d_moy = 12
-                       and d_dom = [DAY])
-   and i_category IN ('[CATEGORY.1]', '[CATEGORY.2]', '[CATEGORY.3]')
-   and ss_wholesale_cost BETWEEN [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
-   and i_manager_id BETWEEN [MANAGER.begin] and [MANAGER.end]
-group by i_brand_id,i_class_id,i_category_id
- having sum(ss_quantity*ss_list_price) > (select average_sales from avg_sales)) last_year
- where this_year.i_brand_id= last_year.i_brand_id
-   and this_year.i_class_id = last_year.i_class_id
-   and this_year.i_category_id = last_year.i_category_id
- order by this_year.channel, this_year.i_brand_id, this_year.i_class_id, this_year.i_category_id
- [_LIMITC];
+
+avg_sales AS (
+    SELECT
+        AVG(quantity * list_price) AS average_sales
+    FROM (
+        SELECT
+            ss_quantity AS quantity,
+            ss_list_price AS list_price
+        FROM
+            store_sales,
+            date_dim
+        WHERE
+            ss_sold_date_sk = d_date_sk
+            AND d_year BETWEEN [YEAR] AND [YEAR] + 2
+            AND ss_wholesale_cost BETWEEN
+                [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+
+        UNION ALL
+
+        SELECT
+            cs_quantity AS quantity,
+            cs_list_price AS list_price
+        FROM
+            catalog_sales,
+            date_dim
+        WHERE
+            cs_sold_date_sk = d_date_sk
+            AND d_year BETWEEN [YEAR] AND [YEAR] + 2
+            AND cs_wholesale_cost BETWEEN
+                [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+
+        UNION ALL
+
+        SELECT
+            ws_quantity AS quantity,
+            ws_list_price AS list_price
+        FROM
+            web_sales,
+            date_dim
+        WHERE
+            ws_sold_date_sk = d_date_sk
+            AND ws_wholesale_cost BETWEEN
+                [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+            AND d_year BETWEEN [YEAR] AND [YEAR] + 2
+    ) x
+)
+
+[_LIMITA]
+SELECT [_LIMITB]
+    this_year.channel AS ty_channel,
+    this_year.i_brand_id AS ty_brand,
+    this_year.i_class_id AS ty_class,
+    this_year.i_category_id AS ty_category,
+    this_year.sales AS ty_sales,
+    this_year.number_sales AS ty_number_sales,
+    last_year.channel AS ly_channel,
+    last_year.i_brand_id AS ly_brand,
+    last_year.i_class_id AS ly_class,
+    last_year.i_category_id AS ly_category,
+    last_year.sales AS ly_sales,
+    last_year.number_sales AS ly_number_sales
+FROM
+    (
+        SELECT
+            'store' AS channel,
+            i_brand_id,
+            i_class_id,
+            i_category_id,
+            SUM(ss_quantity * ss_list_price) AS sales,
+            COUNT(*) AS number_sales
+        FROM
+            store_sales,
+            item,
+            date_dim
+        WHERE
+            ss_item_sk IN (
+                SELECT ss_item_sk
+                FROM cross_items
+            )
+            AND ss_item_sk = i_item_sk
+            AND ss_sold_date_sk = d_date_sk
+            AND d_week_seq = (
+                SELECT d_week_seq
+                FROM date_dim
+                WHERE
+                    d_year = [YEAR] + 1
+                    AND d_moy = 12
+                    AND d_dom = [DAY]
+            )
+            AND i_category IN (
+                '[CATEGORY.1]',
+                '[CATEGORY.2]',
+                '[CATEGORY.3]'
+            )
+            AND i_manager_id BETWEEN [MANAGER.begin] AND [MANAGER.end]
+            AND ss_wholesale_cost BETWEEN
+                [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+        GROUP BY
+            i_brand_id,
+            i_class_id,
+            i_category_id
+        HAVING
+            SUM(ss_quantity * ss_list_price) > (
+                SELECT average_sales
+                FROM avg_sales
+            )
+    ) this_year,
+
+    (
+        SELECT
+            'store' AS channel,
+            i_brand_id,
+            i_class_id,
+            i_category_id,
+            SUM(ss_quantity * ss_list_price) AS sales,
+            COUNT(*) AS number_sales
+        FROM
+            store_sales,
+            item,
+            date_dim
+        WHERE
+            ss_item_sk IN (
+                SELECT ss_item_sk
+                FROM cross_items
+            )
+            AND ss_item_sk = i_item_sk
+            AND ss_sold_date_sk = d_date_sk
+            AND d_week_seq = (
+                SELECT d_week_seq
+                FROM date_dim
+                WHERE
+                    d_year = [YEAR]
+                    AND d_moy = 12
+                    AND d_dom = [DAY]
+            )
+            AND i_category IN (
+                '[CATEGORY.1]',
+                '[CATEGORY.2]',
+                '[CATEGORY.3]'
+            )
+            AND ss_wholesale_cost BETWEEN
+                [WHOLESALE_COST.begin] AND [WHOLESALE_COST.end]
+            AND i_manager_id BETWEEN [MANAGER.begin] AND [MANAGER.end]
+        GROUP BY
+            i_brand_id,
+            i_class_id,
+            i_category_id
+        HAVING
+            SUM(ss_quantity * ss_list_price) > (
+                SELECT average_sales
+                FROM avg_sales
+            )
+    ) last_year
+
+WHERE
+    this_year.i_brand_id = last_year.i_brand_id
+    AND this_year.i_class_id = last_year.i_class_id
+    AND this_year.i_category_id = last_year.i_category_id
+
+ORDER BY
+    this_year.channel,
+    this_year.i_brand_id,
+    this_year.i_class_id,
+    this_year.i_category_id
+
+[_LIMITC];
+```
