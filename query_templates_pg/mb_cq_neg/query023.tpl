@@ -85,7 +85,7 @@ best_ss_customer AS (
                 JOIN date_dim rd
                     ON sr.sr_returned_date_sk = rd.d_date_sk
             WHERE
-                sr.sr_customer_sk = c.c_customer_sk
+                sr.sr_customer_sk = c_customer_sk
                 AND rd.d_year = [YEAR]
         )
 
@@ -97,7 +97,7 @@ best_ss_customer AS (
                 JOIN date_dim wd
                     ON wr.wr_returned_date_sk = wd.d_date_sk
             WHERE
-                wr.wr_returning_customer_sk = c.c_customer_sk
+                wr.wr_returning_customer_sk = c_customer_sk
                 AND wd.d_year = [YEAR]
         )
 

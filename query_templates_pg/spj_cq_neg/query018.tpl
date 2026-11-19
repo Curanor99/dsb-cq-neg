@@ -39,6 +39,6 @@
        AND NOT EXISTS (
               SELECT 1
               FROM web_sales ws
-              WHERE ws.ws_item_sk = i.i_item_sk
+              WHERE ws.ws_item_sk = i_item_sk
        )
 ;
