@@ -52,7 +52,7 @@ See distcomp.c for details
 #define fips_county_tz90	4
 #define fips_county_tz9	5
 #define fips_county_tz1	6
-#define fips_county_LÅt	7
+#define fips_county_œ)+Ž	7
 
 /* aliases for values/weights in the street_names distribution */
 /* NONE DEFINED */
@@ -149,7 +149,7 @@ See distcomp.c for details
 #define colors_low	3
 #define colors_medium	4
 #define colors_high	5
-#define colors_t	6
+#define colors_Ž	6
 
 /* aliases for values/weights in the brand_syllables distribution */
 /* NONE DEFINED */

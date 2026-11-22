@@ -9,7 +9,7 @@ tools_path = PROJECT_ROOT / "code" / "tools"
 templates_path = PROJECT_ROOT / "query_templates_pg"
 workload_path = PROJECT_ROOT / "workload"
 
-config = json.loads(Path("scripts/workload_config.json").read_text())
+config = json.loads((PROJECT_ROOT / "custom_scripts" / "util" / "workload_config.json").read_text())
 
 def run(command):
     result = subprocess.run(command, cwd=tools_path, capture_output=True, text=True)
