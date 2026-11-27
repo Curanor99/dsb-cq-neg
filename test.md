@@ -1,0 +1,1 @@
+make -f makefile -j1 dsdgen dsqgen distcomp
